@@ -108,3 +108,30 @@ rtl-power-prediction-ml/
 │
 ├── RTL_GUI.ipynb
 └── README.md
+
+## Project Structure
+
+```
+rtl_power/pipeline.py   # GUI-free core: data loading, preprocessing, models, metrics, schema helpers
+tests/test_pipeline.py  # pytest unit tests
+RTL_GUI.ipynb           # Tkinter dashboard
+```
+
+## Running the Tests
+
+```bash
+pip install -r requirements.txt
+pytest --cov=rtl_power
+```
+
+The suite has 26 tests with 100% line coverage of `rtl_power/pipeline.py`. It covers feature selection, preprocessing (one-hot encoding, scaling, unseen categories), training and prediction for all five models, reproducibility, saving and loading models, metric calculations and the GUI schema helpers. GitHub Actions runs it on every push.
+
+## Note on Target Leakage
+
+In this dataset `total_power_mW` is exactly `static_power_mW + dynamic_power_mW`, so using both components as inputs lets a model add them up instead of learning from RTL activity. The pipeline drops these two columns by default (`exclude_leakage=True`), and a test checks this property of the data. Even without them the models still score well (30k-row sample, 80/20 split):
+
+| Model | R² with leakage | R² without leakage |
+|---|---|---|
+| Random Forest | 1.0000 | 0.9966 |
+| Decision Tree | 0.9999 | 0.9934 |
+| KNN | 0.9935 | 0.9906 |
